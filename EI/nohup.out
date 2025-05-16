@@ -1,0 +1,31 @@
+update.go:85: cannot change mount namespace according to change mount (/var/lib/snapd/hostfs/boot /boot none bind,ro 0 0): permission denied
+Gtk-Message: 11:12:11.572: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+
+(Typora:26122): Gtk-WARNING **: 11:12:11.716: GTK+ module /snap/typora/96/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+Gtk-Message: 11:12:11.716: Failed to load module "canberra-gtk-module"
+
+(Typora:26122): Gtk-WARNING **: 11:12:11.726: GTK+ module /snap/typora/96/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+Gtk-Message: 11:12:11.726: Failed to load module "canberra-gtk-module"
+[26122:0411/111214.380523:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.login1.Manager.Inhibit: object_path= /org/freedesktop/login1: org.freedesktop.DBus.Error.AccessDenied: An AppArmor policy prevents this sender from sending this message to this recipient; type="method_call", sender=":1.347" (uid=1000 pid=26122 comm="/snap/typora/96/typora/Typora --no-sandbox --disab" label="snap.typora.typora (enforce)") interface="org.freedesktop.login1.Manager" member="Inhibit" error name="(unset)" requested_reply="0" destination="org.freedesktop.login1" (uid=0 pid=1707 comm="/usr/lib/systemd/systemd-logind" label="unconfined")
+Gtk-Message: 11:12:35.319: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+
+(Typora:26583): Gtk-WARNING **: 11:12:35.435: GTK+ module /snap/typora/96/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+Gtk-Message: 11:12:35.435: Failed to load module "canberra-gtk-module"
+
+(Typora:26583): Gtk-WARNING **: 11:12:35.437: GTK+ module /snap/typora/96/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+Gtk-Message: 11:12:35.437: Failed to load module "canberra-gtk-module"
+[26583:0411/111235.752845:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.login1.Manager.Inhibit: object_path= /org/freedesktop/login1: org.freedesktop.DBus.Error.AccessDenied: An AppArmor policy prevents this sender from sending this message to this recipient; type="method_call", sender=":1.349" (uid=1000 pid=26583 comm="/snap/typora/96/typora/Typora --no-sandbox --disab" label="snap.typora.typora (enforce)") interface="org.freedesktop.login1.Manager" member="Inhibit" error name="(unset)" requested_reply="0" destination="org.freedesktop.login1" (uid=0 pid=1707 comm="/usr/lib/systemd/systemd-logind" label="unconfined")
+Gtk-Message: 11:16:03.344: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+
+(Typora:27977): Gtk-WARNING **: 11:16:03.436: GTK+ module /snap/typora/96/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+Gtk-Message: 11:16:03.436: Failed to load module "canberra-gtk-module"
+
+(Typora:27977): Gtk-WARNING **: 11:16:03.437: GTK+ module /snap/typora/96/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+Gtk-Message: 11:16:03.437: Failed to load module "canberra-gtk-module"
+[27977:0411/111603.724664:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.login1.Manager.Inhibit: object_path= /org/freedesktop/login1: org.freedesktop.DBus.Error.AccessDenied: An AppArmor policy prevents this sender from sending this message to this recipient; type="method_call", sender=":1.351" (uid=1000 pid=27977 comm="/snap/typora/96/typora/Typora --no-sandbox --disab" label="snap.typora.typora (enforce)") interface="org.freedesktop.login1.Manager" member="Inhibit" error name="(unset)" requested_reply="0" destination="org.freedesktop.login1" (uid=0 pid=1707 comm="/usr/lib/systemd/systemd-logind" label="unconfined")
