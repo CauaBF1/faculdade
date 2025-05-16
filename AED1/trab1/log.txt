@@ -1,0 +1,125 @@
+Bubble Sort - Tamanho 2000: 0.0975 segundos
+Selection Sort - Tamanho 2000: 0.0386 segundos
+Insertion Sort - Tamanho 2000: 0.0406 segundos
+Comb Sort - Tamanho 2000: 0.0021 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 4000: 0.4517 segundos
+Selection Sort - Tamanho 4000: 0.1719 segundos
+Insertion Sort - Tamanho 4000: 0.3231 segundos
+Comb Sort - Tamanho 4000: 0.0134 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 6000: 3.0141 segundos
+Selection Sort - Tamanho 6000: 0.9223 segundos
+Insertion Sort - Tamanho 6000: 0.3618 segundos
+Comb Sort - Tamanho 6000: 0.0064 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 8000: 1.8289 segundos
+Selection Sort - Tamanho 8000: 0.7095 segundos
+Insertion Sort - Tamanho 8000: 0.7260 segundos
+Comb Sort - Tamanho 8000: 0.0107 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 10000: 5.5238 segundos
+Selection Sort - Tamanho 10000: 1.0489 segundos
+Insertion Sort - Tamanho 10000: 1.0947 segundos
+Comb Sort - Tamanho 10000: 0.0128 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 12000: 7.1352 segundos
+Selection Sort - Tamanho 12000: 1.8134 segundos
+Insertion Sort - Tamanho 12000: 1.6271 segundos
+Comb Sort - Tamanho 12000: 0.0148 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 14000: 9.0889 segundos
+Selection Sort - Tamanho 14000: 3.9873 segundos
+Insertion Sort - Tamanho 14000: 3.5822 segundos
+Comb Sort - Tamanho 14000: 0.0206 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 16000: 10.4996 segundos
+Selection Sort - Tamanho 16000: 5.4990 segundos
+Insertion Sort - Tamanho 16000: 2.9629 segundos
+Comb Sort - Tamanho 16000: 0.0595 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 18000: 14.6155 segundos
+Selection Sort - Tamanho 18000: 6.1338 segundos
+Insertion Sort - Tamanho 18000: 3.5669 segundos
+Comb Sort - Tamanho 18000: 0.0276 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 20000: 17.1641 segundos
+Selection Sort - Tamanho 20000: 6.7750 segundos
+Insertion Sort - Tamanho 20000: 7.0006 segundos
+Comb Sort - Tamanho 20000: 0.0250 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 22000: 21.8699 segundos
+Selection Sort - Tamanho 22000: 7.0531 segundos
+Insertion Sort - Tamanho 22000: 7.5026 segundos
+Comb Sort - Tamanho 22000: 0.0901 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 24000: 27.5707 segundos
+Selection Sort - Tamanho 24000: 8.9654 segundos
+Insertion Sort - Tamanho 24000: 9.0116 segundos
+Comb Sort - Tamanho 24000: 0.0316 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 26000: 29.8195 segundos
+Selection Sort - Tamanho 26000: 11.3057 segundos
+Insertion Sort - Tamanho 26000: 10.1568 segundos
+Comb Sort - Tamanho 26000: 0.0385 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 28000: 34.1546 segundos
+Selection Sort - Tamanho 28000: 13.5851 segundos
+Insertion Sort - Tamanho 28000: 12.0644 segundos
+Comb Sort - Tamanho 28000: 0.1301 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 30000: 40.5528 segundos
+Selection Sort - Tamanho 30000: 16.6226 segundos
+Insertion Sort - Tamanho 30000: 16.4070 segundos
+Comb Sort - Tamanho 30000: 0.0523 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 32000: 51.8460 segundos
+Selection Sort - Tamanho 32000: 18.9584 segundos
+Insertion Sort - Tamanho 32000: 18.6720 segundos
+Comb Sort - Tamanho 32000: 0.0408 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 34000: 53.1611 segundos
+Selection Sort - Tamanho 34000: 21.5385 segundos
+Insertion Sort - Tamanho 34000: 19.2965 segundos
+Comb Sort - Tamanho 34000: 0.1361 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 36000: 61.1968 segundos
+Selection Sort - Tamanho 36000: 25.0440 segundos
+Insertion Sort - Tamanho 36000: 19.2368 segundos
+Comb Sort - Tamanho 36000: 0.0717 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 38000: 58.8555 segundos
+Selection Sort - Tamanho 38000: 23.2195 segundos
+Insertion Sort - Tamanho 38000: 21.6246 segundos
+Comb Sort - Tamanho 38000: 0.0925 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 40000: 64.8101 segundos
+Selection Sort - Tamanho 40000: 25.0129 segundos
+Insertion Sort - Tamanho 40000: 24.0579 segundos
+Comb Sort - Tamanho 40000: 0.0918 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 42000: 70.0875 segundos
+Selection Sort - Tamanho 42000: 27.5498 segundos
+Insertion Sort - Tamanho 42000: 26.8945 segundos
+Comb Sort - Tamanho 42000: 0.0833 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 44000: 77.2259 segundos
+Selection Sort - Tamanho 44000: 30.1359 segundos
+Insertion Sort - Tamanho 44000: 29.2495 segundos
+Comb Sort - Tamanho 44000: 0.0913 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 46000: 84.8075 segundos
+Selection Sort - Tamanho 46000: 33.1679 segundos
+Insertion Sort - Tamanho 46000: 33.7917 segundos
+Comb Sort - Tamanho 46000: 0.0969 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 48000: 92.4779 segundos
+Selection Sort - Tamanho 48000: 34.0277 segundos
+Insertion Sort - Tamanho 48000: 31.0970 segundos
+Comb Sort - Tamanho 48000: 0.0973 segundos
+--------------------------------------------------
+Bubble Sort - Tamanho 50000: 96.9221 segundos
+Selection Sort - Tamanho 50000: 40.6714 segundos
+Insertion Sort - Tamanho 50000: 39.7031 segundos
+Comb Sort - Tamanho 50000: 0.1182 segundos
+--------------------------------------------------
