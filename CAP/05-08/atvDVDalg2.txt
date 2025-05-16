@@ -1,0 +1,46 @@
+|>Autor: Cauã Borges Faria(834437)
+|>Data de criação: 05/08/2024
+|>Data de modificação: 05/08/2024
+|>Objetivo: Receber preço e quantidade de DVDs, e retornar o valor total no estoque e o preço medio
+
+Algoritmo DVDs
+Input: Quantidade e preço DVDs
+Output: Preço total do estoque, preço medio
+
+begin
+	valorTotal <- 0
+	totalDVD <- 0
+
+
+	read preçoDVD, quantDVD
+
+	|> Validar se existe ao menos um numero valido
+	if preçoDVD = 0 and quantDVD = 0 then
+		write "É necessário pelo menos um item válido"
+	else
+		
+		|> Loop para receber os preços e quantidades dos DVDs
+		while preçoDVD <> 0 and quantDVD <> 0 do
+
+			|> Calcular o valor total
+			valorTotal <- valorTotal + (preçoDVD * quantDVD)
+		
+			|> Calcular o total de DVDs
+			totalDVD <- totalDVD + quantDVD
+		
+			|>Receber preço e quantidade de DVDs
+			read preçoDVD, quantDVD
+		end while
+
+
+		|>Calcular o preço medio
+		if (totalDVD <= 0) then
+			write "Quantidade invalida de DVDs"
+		else 
+			preçoMedio <- valorTotal / totalDVD
+			// Mostrar o resultado
+			write valorTotal
+			write preçoMedio
+		end if
+	end if
+end
