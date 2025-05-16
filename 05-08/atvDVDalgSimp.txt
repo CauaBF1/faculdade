@@ -1,0 +1,13 @@
+Autor: Cauã Borges Faria(834437)
+Data de criação: 05/08/2024
+Data de modificação: 05/08/2024
+Objetivo: Receber preço e quantidade de DVDs, e retornar o valor total no estoque e o preço medio
+
+Input: Preço e quantidade de DVDs
+Output: Valor total em estoque e preço medio
+begin
+	Ler o preço e quantidade de DVDs
+	Calcular o valor total em estoque
+	Calcular o preço medio
+	Mostrar o resultado
+end
