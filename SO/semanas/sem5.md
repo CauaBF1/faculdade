@@ -215,6 +215,59 @@ Formalmente, diz-se que um conjunto de tarefas estará em deadlock (impasse) se 
 
 # Impasses: condições e tratamentos
 
+Como vimos, nem todas as situações que envolvem o uso de múltiplos recursos em exclusão mútua podem levar a deadlocks ou a algum impasse.
+
+Algumas condições são necessárias para ocorrência de impasses:
+
+    Uso de recursos compartilhados em exclusão mútua
+    Tarefas que já bloquearam recursos podem necessitar bloquear outros recursos
+    Recursos bloqueados não podem ser retirados das tarefas que os alocaram (não-preempção)
+    Há uma dependência circular entre as tarefas e os recursos bloqueados e necessários
+
+Embora existam estudos que tentam modelar e prever possíveis impasses, nem sempre isso é possível, dado que seria preciso conhecer previamente todas das demandas por recursos compartilhados pelas tarefas.
+
+Ao lidar-se com impasses, é possível:
+
+    Ignorar e torcer para que não ocorram
+    Tentar detectar e tratar
+    Evitar, com a alocação cuidadosa de recursos
+    Prevenir, negando a ocorrência de alguma da 4 condições para impasse mostradas anteriormente
+
+Uma possível razão para ignorar a possibilidade de impasses é a baixa probabilidade de suas ocorrências e o possível alto custo com as demais estratégias de tratamento.
+
+Se for possível detectar a ocorrência de um impasse, pode ser que alguma estratégia de recuperação seja viável. Por exemplo, fazendo a preempção de algum recurso bloqueado, se isso não tiver impacto na sua lógica de operação. Em alguns casos, pode ser preciso eliminar tarefas. 
+
+Evitar impasses não é fácil, já que as estratégias conhecidas requerem conhecimento prévio das tarefas e de suas demandas por recursos em uso com exclusão mútua. Além disso, recursos podem tanto tratar-se de elementos físicos, ou estruturas conhecidas pelo SO, quanto elementos lógicos, como semáforos usados para sincronizações das tarefas.
+
+Contudo, pode ser possível prevenir a ocorrência de impasses, atacando alguma das condições necessárias para suas ocorrências.
+
+A condição de exclusão mútua pode ser tratada em alguns casos. Por exemplo, ao invés de deixar cada tarefa que deseja imprimir bloquear a impressora, pode-se fazer com que cada uma gere um arquivo de impressão e apenas um servidor de impressão use o dispositivo físico para imprimir os arquivos previamente gerados. 
+
+Nesse caso, é preciso ainda que haja espaço em disco, para que isso não se torne um outro recurso compartilhado bloqueado!
+
+Outra estratégia para tentar prevenir impasses (deadlocks) em situações em que tarefas requerem vários recursos em uso exclusivo, é identificar todos eles e tentar alocá-los de uma só vez. Se a alocação de todos não for possível, todos os que foram alocados são liberados e uma nova tentativa deve ser feita. Neste caso, pode haver uma espera com duração aleatória antes de cada nova tentativa, para evitar que todas as tarefas em situação equivalente fiquem num livelock. Diferentemente do deadlock, que as tarefas estão bloqueadas e inativas, num livelock, as tarefas estão ativas, mas numa situação em que não conseguem progredir. 
+
+Na busca por prevenção de impasses, pode-se também tentar quebrar a condição de não-preempção. Nem todo recurso em uso pode ser retirado da tarefa que o bloqueou, contudo. Em alguns casos, pode ser possível criar versões virtualizadas de recursos, deixando que apenas uma tarefa manipule o recurso efetivo. Ao tratar-se de recursos como entradas em tabelas de um banco de dados, contudo, isso pode não ser possível.
+
+Uma tentativa de evitar formação de uma espera circular é identificar os recursos de forma sequencial e garantir que, quando uma tarefa requer vários recursos em exclusão mútua, os recursos sempre sejam requisitados na mesma ordem (crescente, por exemplo).  Embora isso possa fazer sentido para poucos recursos, é muito difícil de implantar de maneira generalizada em um SO, com números muito grandes e dinâmicos de recursos.
+
+## Impasses na espera por mensagens
+
+Além de considerar a possibilidade de impasses diante da necessidade de bloqueio de recursos físicos e lógicos, impasses também podem ocorrer nas comunicações entre tarefas. 
+
+Por exemplo, uma tarefa pode ter enviado uma mensagem para outra e estar bloqueada à espera da resposta apropriada. A outra tarefa, contudo, pode estar bloqueada à espera da mensagem original, que, por algum erro na comunicação, não foi recebida.
+
+Essas situações caracterizam impasses em função da ocorrência de eventos. Em geral, usam-se temporizadores associados a cada transmissão de mensagem que requer confirmação. Toda vez que uma mensagem deste tipo é enviada, um temporizador é iniciado localmente, com a duração prevista para a propagação da mensagem, o recebimento do outro lado, o processamento remoto e a geração de uma mensagem de resposta, a propagação da mensagem de resposta, o recebimento local (e mais alguma pequena folga). Se o temporizador disparar, isso é uma indicação que a mensagem pode ter se perdido e é preciso retransmiti-la, até um número máximo de tentativas, quando a comunicação é abortada.
+
+## Starvation (inanição)
+Assim como no escalonamento, é preciso que as estratégias de prevenção de impasses não levem tarefas à inanição (starvation).
+
+Como se vê, talvez não seja possível (ou é impossível!) ao SO prevenir ou tratar deadlocks. Assim, cabe às aplicações tentar prevenir impasses (deadlocks). 
+
+Em suma, o que podemos fazer para prevenir deadlocks quando as tarefas de nossas aplicações (ou o próprio código do SO em suas atividades internas) requerem o uso de múltiplos recursos em exclusão mútua?
+
+    Requisitar todos os recursos na mesma ordem.
+    Tentar alocar todos os recursos de uma só vez, na entrada da região crítica; se não for possível, libera-se aqueles alocados e tenta-se alocar todos novamente, em algum momento;
 
 
 
