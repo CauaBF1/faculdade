@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 
-#define MAX_READERS 5
+#define MAX_READERS 8
 
 sem_t catraca, db, readerLimit; // semaforos para controle de entrada, local de acesso, limite de leitores 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // proteger variavel readers
