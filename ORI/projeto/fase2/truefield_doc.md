@@ -3,7 +3,7 @@
 ## 2- Equipe:
 
 - Cauã Borges Faria(834437)
-- Vitor Rodruigues da Mata (831591)
+- Vitor Rodrigues da Mata (831591)
 - Yuri Arita de Carvalho (832916)
 
 ## 5. Principais Unidades de Software
