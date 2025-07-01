@@ -69,7 +69,6 @@ FIELD_WIDTH, FIELD_HEIGHT = 1000, 600
 BALL_RADIUS, PLAYER_RADIUS = 10, 15
 BALL_SPEED, PLAYER_SPEED = 4, 4
 POSSE_DISTANCE = 30
-SLICE_TIME = 100
 
 class Campo:
     def __init__(self, x, y, w, h):
@@ -183,40 +182,40 @@ class Jogador:
 def create_teams():
     jogadores = []
     
-    # Posições base para formação 4-3-3 ajustadas
+    # Posições base para formação 4-3-3
     campo_rect = pygame.Rect((SCREEN_WIDTH-FIELD_WIDTH)//2, (SCREEN_HEIGHT-FIELD_HEIGHT)//2, FIELD_WIDTH, FIELD_HEIGHT)
     
-    # Time Amarelo (esquerda) - posições ajustadas
+    # Time Amarelo (esquerda)
     positions_yellow = [
         (campo_rect.left + 80, campo_rect.centery),  # Goleiro
-        (campo_rect.left + 200, campo_rect.top + 130),  # Defesa
-        (campo_rect.left + 200, campo_rect.top + 230),
-        (campo_rect.left + 200, campo_rect.bottom - 230),
-        (campo_rect.left + 200, campo_rect.bottom - 130),
-        (campo_rect.left + 350, campo_rect.top + 180),  # Meio
+        (campo_rect.left + 200, campo_rect.top + 150),  # Defesa
+        (campo_rect.left + 200, campo_rect.top + 250),
+        (campo_rect.left + 200, campo_rect.bottom - 250),
+        (campo_rect.left + 200, campo_rect.bottom - 150),
+        (campo_rect.left + 350, campo_rect.top + 200),  # Meio
         (campo_rect.left + 350, campo_rect.centery),
-        (campo_rect.left + 350, campo_rect.bottom - 180),
-        (campo_rect.left + 480, campo_rect.top + 160),  # Ataque - ajustado para não sobrepor
-        (campo_rect.left + 480, campo_rect.centery),
-        (campo_rect.left + 480, campo_rect.bottom - 160),
+        (campo_rect.left + 350, campo_rect.bottom - 200),
+        (campo_rect.left + 500, campo_rect.top + 180),  # Ataque
+        (campo_rect.left + 500, campo_rect.centery),
+        (campo_rect.left + 500, campo_rect.bottom - 180),
     ]
     
     for i, (x, y) in enumerate(positions_yellow):
         jogadores.append(Jogador(x, y, i + 1, (255, 255, 0)))
     
-    # Time Azul (direita) - posições ajustadas
+    # Time Azul (direita)
     positions_blue = [
         (campo_rect.right - 80, campo_rect.centery),  # Goleiro
-        (campo_rect.right - 200, campo_rect.top + 130),  # Defesa
-        (campo_rect.right - 200, campo_rect.top + 230),
-        (campo_rect.right - 200, campo_rect.bottom - 230),
-        (campo_rect.right - 200, campo_rect.bottom - 130),
-        (campo_rect.right - 350, campo_rect.top + 180),  # Meio
+        (campo_rect.right - 200, campo_rect.top + 150),  # Defesa
+        (campo_rect.right - 200, campo_rect.top + 250),
+        (campo_rect.right - 200, campo_rect.bottom - 250),
+        (campo_rect.right - 200, campo_rect.bottom - 150),
+        (campo_rect.right - 350, campo_rect.top + 200),  # Meio
         (campo_rect.right - 350, campo_rect.centery),
-        (campo_rect.right - 350, campo_rect.bottom - 180),
-        (campo_rect.right - 480, campo_rect.top + 160),  # Ataque - ajustado para não sobrepor
-        (campo_rect.right - 480, campo_rect.centery),
-        (campo_rect.right - 480, campo_rect.bottom - 160),
+        (campo_rect.right - 350, campo_rect.bottom - 200),
+        (campo_rect.right - 500, campo_rect.top + 180),  # Ataque
+        (campo_rect.right - 500, campo_rect.centery),
+        (campo_rect.right - 500, campo_rect.bottom - 180),
     ]
     
     for i, (x, y) in enumerate(positions_blue):
@@ -224,35 +223,10 @@ def create_teams():
     
     return jogadores
 
-def generate_heatmap(surface, player_positions_history, field_rect, cell_size=20, target_player_id=None):
-    """Gera e desenha um mapa de calor das posições dos jogadores."""
-    heatmap_data = {}
-    max_count = 0
-
-    for x in range(field_rect.left, field_rect.right, cell_size):
-        for y in range(field_rect.top, field_rect.bottom, cell_size):
-            heatmap_data[(x, y)] = 0
-
-    for frame_positions in player_positions_history:
-        for player_id, (px, py) in frame_positions.items():
-            if target_player_id is None or player_id == target_player_id:
-                cell_x = int((px - field_rect.left) // cell_size) * cell_size + field_rect.left
-                cell_y = int((py - field_rect.top) // cell_size) * cell_size + field_rect.top
-                cell_x = max(field_rect.left, min(cell_x, field_rect.right - cell_size))
-                cell_y = max(field_rect.top, min(cell_y, field_rect.bottom - cell_size))
-                heatmap_data[(cell_x, cell_y)] = heatmap_data.get((cell_x, cell_y), 0) + 1
-                if heatmap_data[(cell_x, cell_y)] > max_count:
-                    max_count = heatmap_data[(cell_x, cell_y)]
-
-    for (x, y), count in heatmap_data.items():
-        if count > 0:
-            alpha = int(255 * (count / max_count)) if max_count > 0 else 0
-            pygame.draw.rect(surface, (255, 0, 0, alpha), (x, y, cell_size, cell_size))
-
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Futebol com Quadtree - Posse de Bola e Heatmap")
+    pygame.display.set_caption("Futebol com Quadtree - Detecção de Posse de Bola")
     clock = pygame.time.Clock()
     
     # Inicialização
@@ -264,13 +238,6 @@ def main():
     selected_player = None
     current_ball_owner = None
     show_quadtree_debug = False
-    
-    # Variáveis do heatmap
-    player_positions_history = []
-    show_heatmap = False
-    individual_heatmap = False
-    current_player_id = 1
-    last_slice = pygame.time.get_ticks()
     
     running = True
     while running:
@@ -287,14 +254,6 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     show_quadtree_debug = not show_quadtree_debug
-                elif event.key == pygame.K_h:
-                    show_heatmap = not show_heatmap
-                    individual_heatmap = False
-                elif event.key == pygame.K_n and show_heatmap:
-                    individual_heatmap = True
-                    current_player_id += 1
-                    if current_player_id > len(jogadores):
-                        current_player_id = 1
         
         # Controles
         keys = pygame.key.get_pressed()
@@ -311,13 +270,6 @@ def main():
             if keys[K_DOWN]: selected_player.move(0, PLAYER_SPEED, campo)
             if keys[K_LEFT]: selected_player.move(-PLAYER_SPEED, 0, campo)
             if keys[K_RIGHT]: selected_player.move(PLAYER_SPEED, 0, campo)
-        
-        # Salva posições dos jogadores para heatmap
-        now = pygame.time.get_ticks()
-        if now - last_slice >= SLICE_TIME:
-            frame_positions = {i+1: (jogador.x, jogador.y) for i, jogador in enumerate(jogadores)}
-            player_positions_history.append(frame_positions)
-            last_slice = now
         
         # Atualiza quadtree e detecta posse de bola
         campo.update_players_quadtree(jogadores)
@@ -340,15 +292,6 @@ def main():
         # Debug da quadtree
         if show_quadtree_debug:
             campo.players_quadtree.draw_debug(screen)
-        
-        # Heatmap
-        if show_heatmap:
-            heatmap_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-            if individual_heatmap:
-                generate_heatmap(heatmap_surface, player_positions_history, campo.rect, target_player_id=current_player_id)
-            else:
-                generate_heatmap(heatmap_surface, player_positions_history, campo.rect)
-            screen.blit(heatmap_surface, (0, 0))
         
         bola.draw(screen)
         
@@ -384,36 +327,20 @@ def main():
             sem_posse_rect = sem_posse_txt.get_rect(center=(SCREEN_WIDTH//2, 80))
             screen.blit(sem_posse_txt, sem_posse_rect)
         
-        # Mostra o número do jogador se for heatmap individual
-        if show_heatmap and individual_heatmap:
-            font = pygame.font.SysFont(None, 36)
-            txt = font.render(f"Heatmap Jogador {current_player_id}", True, (255, 255, 0))
-            screen.blit(txt, (SCREEN_WIDTH//2-120, 120))
-        
         # Instruções
         font_small = pygame.font.SysFont(None, 20)
         instructions = [
             "WASD: Mover bola | Setas: Mover jogador selecionado",
             "Q: Toggle debug quadtree | Click: Selecionar jogador",
-            "H: Toggle heatmap | N: Próximo jogador (heatmap individual)",
             f"Distância para posse: {POSSE_DISTANCE}px"
         ]
         
         for i, instruction in enumerate(instructions):
             txt = font_small.render(instruction, True, (255, 255, 255))
-            screen.blit(txt, (20, SCREEN_HEIGHT - 100 + i * 25))
+            screen.blit(txt, (20, SCREEN_HEIGHT - 80 + i * 25))
         
         pygame.display.flip()
         clock.tick(60)
-    
-    # Salva heatmap ao sair
-    try:
-        heatmap_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-        generate_heatmap(heatmap_surface, player_positions_history, campo.rect)
-        pygame.image.save(heatmap_surface, "heatmap_jogadores.png")
-        print("Heatmap salvo como 'heatmap_jogadores.png'")
-    except:
-        print("Erro ao salvar heatmap")
     
     pygame.quit()
 
