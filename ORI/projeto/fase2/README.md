@@ -1,6 +1,4 @@
-# Documentação do `truefield.py`
-
-## Visão Geral
+# Visão Geral
 O `truefield.py` é um simulador de futebol desenvolvido em Python usando a biblioteca Pygame. O programa implementa uma simulação de futebol com recursos avançados como detecção de posse de bola usando estruturas de dados Quadtree, geração de heatmaps de movimentação dos jogadores e visualização em tempo real.
 
 ## Principais Classes e Componentes
