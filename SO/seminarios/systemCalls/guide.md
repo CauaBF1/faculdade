@@ -8,95 +8,56 @@ Quando o processador executa a instrução syscall, ele troca do modo usuário p
 
 ```asm
 SYM_CODE_START(entry_SYSCALL_64)
-    #Fornece metadados para desenrolamento de pilha (stack unwinding) durante depuração 
+    # Metadados para depuração, como um mapa para quem precisar entender a pilha de chamadas.
 	UNWIND_HINT_ENTRY 
     
-    # Instrução de segurança para Control-Flow Enforcement Technology (CET), prevenindo ataques de desvio de fluxo de execução.
+    # Ponto de verificação para a tecnologia de segurança CET, garantindo que só se pode entrar aqui por um caminho legítimo.
 	ENDBR 
 
-    #Troca o registro GS entre usuário e kernel, permitindo acesso a dados por-CPU do kernel.
+   
+    # Troca o acesso a dados do usuário pelos dados do kernel (per-CPU).
     swapgs 
 	
-    /* tss.sp2 is scratch space. */
-    #Salva o stack pointer (RSP) do usuário no campo sp2 da Task State Segment (TSS) para uso posterior.
+    
+    # Salva o ponteiro da pilha do usuário temporariamente. O TSS é um local "neutro" para isso.
     movq	%rsp, PER_CPU_VAR(cpu_tss_rw + TSS_sp2)
-    #Alterna para o CR3 do kernel (page tables do kernel), mitigando vulnerabilidades como Meltdown. Usa %rsp como registro temporário.
+    # Troca o mapa de memória do usuário pelo mapa de memória seguro do kernel. Essencial para mitigar o Meltdown.
     SWITCH_TO_KERNEL_CR3 scratch_reg=%rsp
-    #Define %rsp para o topo da pilha do kernel alocado para a CPU atual.
+    # Agora sim, aponta o RSP para a pilha do kernel desta CPU. Estamos prontos para trabalhar.
 	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
-
 
 SYM_INNER_LABEL(entry_SYSCALL_64_safe_stack, SYM_L_GLOBAL)
 	ANNOTATE_NOENDBR
 
-	/* Construct struct pt_regs on stack */
-	#Empurra o segmento de dados do usuário para a pilha, armazenando o campo ss da estrutura pt_regs.
+	
+	# Começa a montar a estrutura pt_regs na pilha do kernel, salvando o estado do usuário.
 	pushq	$__USER_DS				/* pt_regs->ss */
-	#Recupera o RSP do usuário salvo anteriormente e empurra para a pilha (campo sp do pt_regs).
 	pushq	PER_CPU_VAR(cpu_tss_rw + TSS_sp2)	/* pt_regs->sp */
-	#Salva RFLAGS do usuário (armazenado em %r11 pela instrução syscall).
+	# RFLAGS e RIP foram salvos pelo hardware nos registradores %r11 e %rcx. Agora os salvamos na pilha.
 	pushq	%r11					/* pt_regs->flags */
-	#Empurra o segmento de código do usuário (campo cs do pt_regs).
 	pushq	$__USER_CS				/* pt_regs->cs */
-	#Salva RIP do usuário (armazenado em %rcx pela instrução syscall). Corresponde ao campo ip do pt_regs.
 	pushq	%rcx					/* pt_regs->ip */
 
-#Rótulo para pós-configuração do hardware frame.
 SYM_INNER_LABEL(entry_SYSCALL_64_after_hwframe, SYM_L_GLOBAL)
-	#Armazena o número da syscall no campo orig_ax do pt_regs.
+	# Salva o número da syscall (que estava em %rax).
 	pushq	%rax					/* pt_regs->orig_ax */
-	/*
-	 - Empurra todos os registros gerais (RAX, RBX, ..., R15) para a pilha
-
-	 - Limpa os registros para evitar vazamento de dados
-
-	 - Define RAX = -ENOSYS (valor padrão para syscalls inválidas)
-	*/
+	# Salva todos os outros registradores de propósito geral.
 	PUSH_AND_CLEAR_REGS rax=$-ENOSYS
 
-
-	/* IRQs are off. */
-	#Passa o endereço do struct pt_regs (via %rdi) como primeiro argumento para do_syscall_64.
+	
+	# Passa um ponteiro para a estrutura pt_regs (%rdi) e o número da syscall (%rsi) para a função C.
 	movq	%rsp, %rdi
-	/* Sign extend the lower 32bit as syscall numbers are treated as int */
-	#Estende o número da syscall (32 bits em %eax) para 64 bits (%rsi), segundo argumento para do_syscall_64.
 	movslq	%eax, %rsi
 
-	/* clobbers %rax, make sure it is after saving the syscall nr */
-	#Ativa Indirect Branch Restricted Speculation, mitigação para Spectre v2.
+	# Ativa mitigações contra ataques de execução especulativa (Spectre v2, BHI).
 	IBRS_ENTER
-	#Mitigação para Branch History Injection (BHI).
 	UNTRAIN_RET
-	#Limpa o histórico de branches (proteção contra Spectre v2).
 	CLEAR_BRANCH_HISTORY
 
-	/*
-	Chama a função C do_syscall_64, que:
-
-     - Verifica o número da syscall
-
-     - Executa a syscall correspondente
-
-     - Armazena o resultado em pt_regs->ax
-
-     - Desabilita interrupções durante a execução
-	*/
-	call	do_syscall_64		/* returns with IRQs disabled */
+	# Com tudo pronto e seguro, o controle é passado para a função C que orquestra a syscall.
+	call	do_syscall_64		
 
 ```
-Fluxo pós-execução:
-
-Após do_syscall_64, o controle retorna para:
-
-    Restauração de registros
-    
-    Troca de contexto de volta para usuário
-    
-    Instrução sysret para retorno ao espaço do usuário.
-
-
-### Details:
-
 A instrução syscall no processador x86-64 tem um comportamento especial:
 
     Ela salva o endereço de retorno (RIP) do usuário em %rcx.
@@ -104,8 +65,6 @@ A instrução syscall no processador x86-64 tem um comportamento especial:
     Ela salva o valor dos flags (RFLAGS) do usuário em %r11.
 
 Isso é uma convenção do hardware para permitir que o kernel recupere esses valores ao retornar para o usuário via sysret. Portanto, %r11 não é um registrador qualquer; ele é usado para armazenar temporariamente os flags do usuário durante a syscall
-
-
 
     O kernel constrói um struct pt_regs na pilha do kernel empurrando os valores dos segmentos, ponteiro de pilha, flags e endereço de instrução do usuário.
     
@@ -135,7 +94,7 @@ Principais componentes:
 
 
 Aplicação no kernel:
-O uso de ENDBR no seu código é um exemplo de IBT, onde o kernel marca pontos de entrada válidos para saltos indiretos, aumentando a proteção contra exploração de vulnerabilidades
+O uso de ENDBR no código é um exemplo de IBT, onde o kernel marca pontos de entrada válidos para saltos indiretos, aumentando a proteção contra exploração de vulnerabilidades
 
 ### swapgs
 O que o SWAPGS faz?
@@ -222,41 +181,119 @@ Como funciona:
     Pode envolver a execução de uma sequência de saltos controlados ou o uso de instruções específicas do processador para limpar o buffer de predição.
 
 
+## do_syscall_64 
+
+**Despachar:** Descobrir qual função do kernel corresponde ao número da syscall e executá-la.
+
+**Decidir o Retorno:** Após a execução, determinar qual é a maneira mais segura e eficiente de voltar ao modo de usuário: o caminho rápido `SYSRET` ou o caminho completo `IRET`."
+
+​	
+
+```c
+// retorna um booleano que significa "pode usar SYSRET?"
+__visible noinstr bool do_syscall_64(struct pt_regs *regs, int nr)
+{
+	// 1. Hooks de entrada: notifica subsistemas como seccomp e ftrace.
+	nr = syscall_enter_from_user_mode(regs, nr);
+
+	// 2. O Despacho: Tenta encontrar e executar a syscall nas tabelas x64 ou x32.
+	if (!do_syscall_x64(regs, nr) && !do_syscall_x32(regs, nr) && nr != -1) {
+		// Se o número não corresponde a nenhuma syscall, executa a "não implementada".
+		regs->ax = __x64_sys_ni_syscall(regs);
+	}
+
+	// 3. Hooks de saída: notifica que a syscall terminou.
+	syscall_exit_to_user_mode(regs);
+
+	/*
+	 * 4. A Decisão Crítica: Uma série de verificações de segurança para
+	 * decidir se o retorno rápido via SYSRET é seguro.
+	 */
+
+	// Em ambientes virtualizados Xen, o IRET é obrigatório.
+	if (cpu_feature_enabled(X86_FEATURE_XENPV))
+		return false; // -> Use IRET
+
+	// O hardware exige que RCX e R11 contenham RIP e RFLAGS para o SYSRET.
+	if (unlikely(regs->cx != regs->ip || regs->r11 != regs->flags))
+		return false; // -> Use IRET
+
+	// Os segmentos de código e pilha devem ser os padrões do usuário.
+	if (unlikely(regs->cs != __USER_CS || regs->ss != __USER_DS))
+		return false; // -> Use IRET
+
+	// O endereço de retorno deve estar no espaço de usuário canônico para evitar falhas no kernel.
+	if (unlikely(regs->ip >= TASK_SIZE_MAX))
+		return false; // -> Use IRET
+
+	// SYSRET não lida bem com os flags RF e TF, essenciais para depuração.
+	if (unlikely(regs->flags & (X86_EFLAGS_RF | X86_EFLAGS_TF)))
+		return false; // -> Use IRET
+
+	// Se todas as verificações passaram, o caminho rápido é autorizado.
+	return true; // -> Pode usar SYSRET!
+}
+
+```
+
+A assinatura da função mostra que ela recebe os **registradores do usuário salvos** (`regs`) e o **número da syscall** (`nr`) vindo do registrador `%rax`. Ela retorna um booleano que instrui o código Assembly chamador a usar o caminho de retorno rápido (`true` para `SYSRET`) ou o lento (`false` para `IRET`).
+
+**`add_random_kstack_offset()`**: Medida de segurança (Kernel Address Space Layout Randomization) que adiciona um pequeno deslocamento aleatório à pilha do kernel para dificultar ataques baseados em corrupção de pilha.
+
+**`syscall_enter_from_user_mode()`**: Este é o primeiro "gancho" (hook) principal. Ele notifica subsistemas como **ftrace** (para rastreamento) e **seccomp** (para filtragem de segurança) que uma syscall está prestes a ser executada. O Seccomp pode decidir bloquear a syscall, e nesse caso a função retorna um novo valor para `nr` (geralmente -1), efetivamente cancelando a chamada antes mesmo que ela comece.
+
+**`do_syscall_x64(regs, nr)`**: Tenta executar a syscall usando a tabela para a ABI x86-64 padrão.
+
+**`do_syscall_x32(regs, nr)`**: Se a primeira falhar, tenta executar usando a tabela para a ABI x32 (usada para compatibilidade).
+
+**`if (!... && !... && nr != -1)`**: A condição do `if` só é verdadeira se **ambas** as tentativas de despacho falharem (ou seja, o número `nr` é inválido) **e** a chamada não foi previamente cancelada pelo seccomp (`nr != -1`).
+
+**`regs->ax = __x64_sys_ni_syscall(regs);`**: Se a syscall é inválida, esta função é chamada. `ni_syscall` significa "not implemented" (não implementada) e simplesmente retorna o código de erro `-ENOSYS`. O resultado é colocado em `regs->ax`, que é o campo que corresponde ao registrador `%rax` para o retorno ao usuário.
+
+
+
+O restante do código é uma série de **verificações de segurança e sanidade** para decidir se o caminho rápido `SYSRET` pode ser usado. `SYSRET` é mais rápido que `IRET`, mas possui pré-requisitos de hardware muito estritos.
+
+1. **`if (cpu_feature_enabled(X86_FEATURE_XENPV))`**: Em ambientes de paravirtualização Xen, o retorno deve sempre usar `IRET`. Retorna `false`.
+2. **`if (unlikely(regs->cx != regs->ip || regs->r11 != regs->flags))`**: `SYSRET` espera que o endereço de retorno esteja em `RCX` e os flags em `R11`. A instrução `syscall` coloca os valores corretos lá. Se eles foram modificados, é inseguro usar `SYSRET`. Retorna `false`.
+3. **`if (unlikely(regs->cs != __USER_CS || regs->ss != __USER_DS))`**: `SYSRET` também exige que os seletores de segmento de código (`CS`) e de pilha (`SS`) correspondam a valores fixos definidos pelo kernel no boot. Retorna `false` se estiverem incorretos.
+4. **`if (unlikely(regs->ip >= TASK_SIZE_MAX))`**: Verificação de segurança crucial. Em algumas CPUs Intel, executar `SYSRET` com um endereço de retorno "não canônico" (fora do espaço de usuário válido) causa uma falha no modo kernel, o que é uma vulnerabilidade grave. Retorna `false` se o endereço de retorno for inválido.
+5. **`if (unlikely(regs->flags & (X86_EFLAGS_RF | X86_EFLAGS_TF)))`**: `SYSRET` não consegue restaurar o `Resume Flag (RF)` e lida com o `Trap Flag (TF)` de forma diferente de `IRET`. Para garantir o comportamento correto de depuradores, `IRET` deve ser usado nesses casos. Retorna `false`.
+6. **`return true;`**: Se todas as verificações passarem, a função retorna `true`, autorizando o código Assembly a usar a instrução `SYSRET` para um retorno rápido e eficiente ao modo de usuário.
+
+O `do_syscall_64` trata todas as syscalls da mesma forma. Ele simplesmente pega o ponteiro para a `pt_regs` (que contém *todos* os possíveis argumentos e o estado do usuário) e o passa para a função wrapper correspondente. A chamada é sempre no formato: `wrapper_da_syscall(struct pt_regs *regs)`.
+
+
+
 ### Retorno após chamada da syscall
+
 restaurar o estado do usuário a partir de pt_regs e retornar ao modo de usuário da forma mais rápida e segura possível.
 
 caminho rápido (sysretq) e um caminho mais lento e genérico (iret), além de lidar com a possibilidade de uma troca de contexto.
 
 ```c 
 syscall_return_via_sysret:
-        IBRS_EXIT 
+    
+	IBRS_EXIT 
 	POP_REGS pop_rdi=0 // Macro varias instruções popq, restaurando regs prop geral(%rbx, %rcx...) a partir da pilha pt_regs, NÂO restaura o %rdi(reg temp)
 
-	/*
-	 * Now all regs are restored except RSP and RDI.
-	 * Save old stack pointer and switch to trampoline stack.
-	 */
 	movq	%rsp, %rdi // salva ponteiro da pilha do kernel atual, precisa do endereço para restaurar regs restantes
 	movq	PER_CPU_VAR(cpu_tss_rw + TSS_sp0), %rsp // troca pilha atual pela trampoline 
 	UNWIND_HINT_END_OF_STACK // indica q pilha mudou
 
-	pushq	RSP-RDI(%rdi)	/* RSP */ // calcula endereço original de rsp dentro de pt_regs(rdi + offsetrsp)
-	pushq	(%rdi)		/* RDI */ // push valor de rdi ao usuário 
+	pushq	RSP-RDI(%rdi)// calcula endereço original de rsp dentro de pt_regs(rdi + offsetrsp)
+	pushq	(%rdi)		// push valor de rdi ao usuário 
 
-	/*
-	 * We are on the trampoline stack.  All regs except RDI are live.
-	 * We can do future final exit work right here.
-	 */
-	STACKLEAK_ERASE_NOCLOBBER // apaga vestigio pilha kernel 
+	STACKLEAK_ERASE_NOCLOBBER // Apaga rastros da pilha do kernel para evitar vazamento de dados.
 
 	SWITCH_TO_USER_CR3_STACK scratch_reg=%rdi // restaura CR3, contem endereço base das tabelas de paginas do processo de usuário 
 
-	popq	%rdi // restaura registrador com valor da pilha de trampolim
+	popq	%rdi // restaura RDI
 	popq	%rsp // aponta para pilha do usuário 
 SYM_INNER_LABEL(entry_SYSRETQ_unsafe_stack, SYM_L_GLOBAL)
 	ANNOTATE_NOENDBR
 	swapgs // restaura GS apontando para data structs do espaço de usuário 
-	CLEAR_CPU_BUFFERS 
+	CLEAR_CPU_BUFFERS // Limpa buffers internos da CPU (mitigação MDS).
 	sysretq // transição atomica de ring0 para ring3 restaurando %rip a partir de %rcx, RFLAGS a partir de %r11, forma mais rapida de retornar para o modo de usuário 
 ```
 
@@ -265,8 +302,6 @@ SYM_INNER_LABEL(entry_SYSRETQ_unsafe_stack, SYM_L_GLOBAL)
 `IBRS_EXIT`: **O que faz:** Desativa a mitigação de segurança `Indirect Branch Restricted Speculation` (Spectre v2). **Por que faz:** A proteção foi ativada na entrada (`IBRS_ENTER`) para proteger o kernel. Agora que estamos saindo, ela pode ser desativada para não penalizar o desempenho do código de usuário.
 
 `POP_REGS pop_rdi=0`: **O que faz:** Esta é uma macro que executa uma série de instruções `popq` para restaurar os registradores de propósito geral (`%rbx`, `%rcx`, `%rdx`, `%rsi`, `%rbp`, etc.) a partir da pilha (`pt_regs`). **Por que faz:** Está desfazendo a "fotografia" que tiramos na entrada, restaurando o estado exato dos registradores do programa de usuário. O parâmetro `pop_rdi=0` instrui a macro a **NÃO** restaurar o `%rdi` ainda, pois ele será usado como um registrador temporário.
-
-
 
 `movq %rsp, %rdi`: **O que faz:** Salva o ponteiro da pilha do kernel atual (que aponta para a `pt_regs`) em `%rdi`. **Por que faz:** Precisamos do endereço da `pt_regs` para restaurar os últimos registradores, mas vamos trocar de pilha no próximo passo. `%rdi` agora guarda esse endereço vital.
 
@@ -297,6 +332,26 @@ SYM_INNER_LABEL(entry_SYSRETQ_unsafe_stack, SYM_L_GLOBAL)
 
 
 ## SYSCALL_TABLE
+
+
+```c
+0	common	read			sys_read
+1	common	write			sys_write
+2	common	open			sys_open
+3	common	close			sys_close
+4	common	stat			sys_newstat
+5	common	fstat			sys_newfstat
+6	common	lstat			sys_newlstat
+7	common	poll			sys_poll
+8	common	lseek			sys_lseek
+9	common	mmap			sys_mmap
+10	common	mprotect		sys_mprotect
+11	common	munmap			sys_munmap
+12	common	brk				sys_brk
+```
+
+
+
 uma tabela de definição que os scripts de build do kernel usam para gerar automaticamente o código de despacho de syscalls, os cabeçalhos para o espaço de usuário e os stubs de função.
 
 Ele funciona como um mapa de despacho central, conectando o número abstrato de uma syscall à sua implementação concreta no kernel.
@@ -361,23 +416,21 @@ se syscall 456 não existe e usuário chama, a função do_syscall_64 verifica a
 [456] = sys_ni_syscall
 ```
 
+
+
+
+
 ## Syscalls.h
 
+Este header define um conjunto de macros (SYSCALL_DEFINE0, SYSCALL_DEFINE1, etc.) que os desenvolvedores do kernel usam para escrever o código de uma chamada de sistema.
 
+**Metadados para Tracing:** Arrays de strings com os tipos e nomes dos argumentos, para que ferramentas como o `ftrace` possam exibir `sys_read(fd=3, buf=0x..., count=128)`.
 
-este header define um conjunto de macros (SYSCALL_DEFINE0, SYSCALL_DEFINE1, etc.) que os desenvolvedores do kernel usam para escrever o código de uma chamada de sistema.
+**Wrappers de Segurança:** Cria uma função (`__se_sys_read`) que garante que os argumentos passados em registradores de 64 bits sejam tratados corretamente, evitando vulnerabilidades.
 
-**Abstração e Boilerplate:** Cada syscall precisa de muito código repetitivo (boilerplate): a definição da função, metadados para tracing (`ftrace`), verificações de tipo, e uma interface com a arquitetura. Escrever isso manualmente para mais de 400 syscalls seria impraticável e propenso a erros. As macros automatizam tudo isso.
+**A Função Real:** Cria a função final `static inline` (`__do_sys_read`) onde o código escrito pelo desenvolvedor é inserido.
 
-**Segurança e Consistência:** As syscalls são a principal superfície de ataque do kernel. Este arquivo impõe uma maneira consistente de definir as funções, incluindo a sanitização de argumentos (garantindo que tipos `int` de 32 bits sejam estendidos para `long` de 64 bits de forma segura) para evitar vulnerabilidades.
-
-**Portabilidade:** Diferentes arquiteturas de CPU podem ter convenções de chamada ligeiramente diferentes. As macros permitem que uma arquitetura forneça sua própria implementação de "wrapper" (`CONFIG_ARCH_HAS_SYSCALL_WRAPPER`), enquanto o código da syscall em si (`fs/read_write.c`, por exemplo) permanece idêntico em todas as arquiteturas.
-
-**Tracing (Rastreamento):** Ele se integra perfeitamente com o subsistema de tracing do kernel (`ftrace`). As macros geram automaticamente as estruturas de dados necessárias para que os administradores de sistema possam rastrear as chamadas de sistema e seus argumentos de forma legível (ex: `ftrace` pode mostrar `sys_read(fd=3, buf=0x..., count=128)`).
-
-**Declarações `struct`:** As primeiras linhas são **declarações antecipadas (forward declarations)**. Elas informam ao compilador que esses nomes são tipos de estrutura, sem precisar incluir o cabeçalho completo que as define. Isso é feito para que as prototipagens de função de syscall no final do arquivo possam usar esses tipos sem criar dependências circulares de inclusão.
-
-**Includes:** Incluem os tipos e definições básicas necessárias para o restante do arquivo.
+**O Símbolo Público:** Cria um alias `sys_read` que aponta para o wrapper de segurança e é colocado na `sys_call_table`.
 
 
 
@@ -433,11 +486,9 @@ metaprogramação do arquivo. `__MAP` é uma macro que "aplica" uma outra macro 
     /* ... preenche uma struct syscall_metadata ... */
 ```
 
-**O que faz:** Quando `CONFIG_FTRACE_SYSCALLS` está habilitado, esta macro usa a magia do `__MAP` para criar arrays de strings com os nomes dos tipos e dos argumentos da syscall.
+**O que faz:** Quando `CONFIG_FTRACE_SYSCALLS` está habilitado, esta macro usa o `__MAP` para criar arrays de strings com os nomes dos tipos e dos argumentos da syscall.
 
-**Por que é necessário:** Ela popula uma `struct syscall_metadata` que o `ftrace` usa para saber como imprimir os argumentos da syscall de forma bonita e legível, sem que o desenvolvedor precise escrever nenhum código de formatação.
-
-
+**Por que é necessário:** Ela popula uma `struct syscall_metadata` que o `ftrace` usa para saber como imprimir os argumentos da syscall de forma legível, sem que o desenvolvedor precise escrever nenhum código de formatação.
 
 ```C
 #define __SYSCALL_DEFINEx(x, name, ...)                 \
@@ -491,104 +542,5 @@ asmlinkage long sys_futex_wake(void __user *uaddr, unsigned long mask, int nr, u
 
 #### `sys_futex_wake`
 
-Este é o nome da função no kernel que implementa a parte "wake" (acordar) da syscall `futex`. Um **futex** (Fast Userspace Mutex) é um mecanismo de sincronização que permite que threads esperem por um evento sem a necessidade de uma transição custosa para o modo kernel, a menos que seja estritamente necessário. Esta função específica é chamada para acordar threads que estão esperando (bloqueadas) em um determinado futex.
+Este é o nome da função no kernel que implementa a parte "wake" (acordar) da syscall `futex`.
 
-
-
-
-
-## do_syscall_64
-
-
-
-receber o estado do processo do usuário (salvo nos `pt_regs`), invocar o código da syscall correta e, crucialmente, determinar qual instrução Assembly (`SYSRET` ou `IRET`) é segura para retornar ao modo de usuário.
-
-```c
-
-/* Returns true to return using SYSRET, or false to use IRET */
-__visible noinstr bool do_syscall_64(struct pt_regs *regs, int nr)
-{
-	add_random_kstack_offset();
-	nr = syscall_enter_from_user_mode(regs, nr);
-
-	instrumentation_begin();
-
-	if (!do_syscall_x64(regs, nr) && !do_syscall_x32(regs, nr) && nr != -1) {
-		/* Invalid system call, but still a system call. */
-		regs->ax = __x64_sys_ni_syscall(regs);
-	}
-
-	instrumentation_end();
-	syscall_exit_to_user_mode(regs); // permite que subsistemas como o ftrace registrem que a syscall terminou e qual foi seu resultado.
-
-	/*
-	 * Check that the register state is valid for using SYSRET to exit
-	 * to userspace.  Otherwise use the slower but fully capable IRET
-	 * exit path.
-	 */
-
-	/* XEN PV guests always use the IRET path */
-	if (cpu_feature_enabled(X86_FEATURE_XENPV))
-		return false;
-
-	/* SYSRET requires RCX == RIP and R11 == EFLAGS */
-	if (unlikely(regs->cx != regs->ip || regs->r11 != regs->flags))
-		return false;
-
-	/* CS and SS must match the values set in MSR_STAR */
-	if (unlikely(regs->cs != __USER_CS || regs->ss != __USER_DS))
-		return false;
-
-	/*
-	 * On Intel CPUs, SYSRET with non-canonical RCX/RIP will #GP
-	 * in kernel space.  This essentially lets the user take over
-	 * the kernel, since userspace controls RSP.
-	 *
-	 * TASK_SIZE_MAX covers all user-accessible addresses other than
-	 * the deprecated vsyscall page.
-	 */
-	if (unlikely(regs->ip >= TASK_SIZE_MAX))
-		return false;
-
-	/*
-	 * SYSRET cannot restore RF.  It can restore TF, but unlike IRET,
-	 * restoring TF results in a trap from userspace immediately after
-	 * SYSRET.
-	 */
-	if (unlikely(regs->flags & (X86_EFLAGS_RF | X86_EFLAGS_TF)))
-		return false;
-
-	/* Use SYSRET to exit to userspace */
-	return true;
-}
-
-```
-
-A assinatura da função mostra que ela recebe os **registradores do usuário salvos** (`regs`) e o **número da syscall** (`nr`) vindo do registrador `%rax`. Ela retorna um booleano que instrui o código Assembly chamador a usar o caminho de retorno rápido (`true` para `SYSRET`) ou o lento (`false` para `IRET`).
-
-
-
-**`add_random_kstack_offset()`**: Medida de segurança (Kernel Address Space Layout Randomization) que adiciona um pequeno deslocamento aleatório à pilha do kernel para dificultar ataques baseados em corrupção de pilha.
-
-**`syscall_enter_from_user_mode()`**: Este é o primeiro "gancho" (hook) principal. Ele notifica subsistemas como **ftrace** (para rastreamento) e **seccomp** (para filtragem de segurança) que uma syscall está prestes a ser executada. O Seccomp pode decidir bloquear a syscall, e nesse caso a função retorna um novo valor para `nr` (geralmente -1), efetivamente cancelando a chamada antes mesmo que ela comece.
-
-
-
-**`do_syscall_x64(regs, nr)`**: Tenta executar a syscall usando a tabela para a ABI x86-64 padrão.
-
-**`do_syscall_x32(regs, nr)`**: Se a primeira falhar, tenta executar usando a tabela para a ABI x32 (usada para compatibilidade).
-
-**`if (!... && !... && nr != -1)`**: A condição do `if` só é verdadeira se **ambas** as tentativas de despacho falharem (ou seja, o número `nr` é inválido) **e** a chamada não foi previamente cancelada pelo seccomp (`nr != -1`).
-
-**`regs->ax = __x64_sys_ni_syscall(regs);`**: Se a syscall é inválida, esta função é chamada. `ni_syscall` significa "not implemented" (não implementada) e simplesmente retorna o código de erro `-ENOSYS`. O resultado é colocado em `regs->ax`, que é o campo que corresponde ao registrador `%rax` para o retorno ao usuário.
-
-
-
-O restante do código é uma série de **verificações de segurança e sanidade** para decidir se o caminho rápido `SYSRET` pode ser usado. `SYSRET` é mais rápido que `IRET`, mas possui pré-requisitos de hardware muito estritos.
-
-1. **`if (cpu_feature_enabled(X86_FEATURE_XENPV))`**: Em ambientes de paravirtualização Xen, o retorno deve sempre usar `IRET`. Retorna `false`.
-2. **`if (unlikely(regs->cx != regs->ip || regs->r11 != regs->flags))`**: `SYSRET` espera que o endereço de retorno esteja em `RCX` e os flags em `R11`. A instrução `syscall` coloca os valores corretos lá. Se eles foram modificados, é inseguro usar `SYSRET`. Retorna `false`.
-3. **`if (unlikely(regs->cs != __USER_CS || regs->ss != __USER_DS))`**: `SYSRET` também exige que os seletores de segmento de código (`CS`) e de pilha (`SS`) correspondam a valores fixos definidos pelo kernel no boot. Retorna `false` se estiverem incorretos.
-4. **`if (unlikely(regs->ip >= TASK_SIZE_MAX))`**: Verificação de segurança crucial. Em algumas CPUs Intel, executar `SYSRET` com um endereço de retorno "não canônico" (fora do espaço de usuário válido) causa uma falha no modo kernel, o que é uma vulnerabilidade grave. Retorna `false` se o endereço de retorno for inválido.
-5. **`if (unlikely(regs->flags & (X86_EFLAGS_RF | X86_EFLAGS_TF)))`**: `SYSRET` não consegue restaurar o `Resume Flag (RF)` e lida com o `Trap Flag (TF)` de forma diferente de `IRET`. Para garantir o comportamento correto de depuradores, `IRET` deve ser usado nesses casos. Retorna `false`.
-6. **`return true;`**: Se todas as verificações passarem, a função retorna `true`, autorizando o código Assembly a usar a instrução `SYSRET` para um retorno rápido e eficiente ao modo de usuário.
