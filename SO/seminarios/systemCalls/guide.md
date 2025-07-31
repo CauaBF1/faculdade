@@ -1,4 +1,4 @@
-# Estrutura Interna syscalls
+# SystemCalls
 ## entry_64.S
 Quando um syscall é chamada pelo usuário é necessário que a CPU realize algumas funções, essas funções são descritas no entry.s, ou seja, ele é responsavel pelo oque o hardware deve fazer ao uma syscall ser feita.
 
@@ -21,7 +21,7 @@ SYM_CODE_START(entry_SYSCALL_64)
     
     # Salva o ponteiro da pilha do usuário temporariamente. O TSS é um local "neutro" para isso.
     movq	%rsp, PER_CPU_VAR(cpu_tss_rw + TSS_sp2)
-    # Troca o mapa de memória do usuário pelo mapa de memória seguro do kernel. Essencial para mitigar o Meltdown.
+    # Troca o mapa de memória do usuário pelo mapa de memória seguro do kernel. Isolar espaçoes de endereçamento
     SWITCH_TO_KERNEL_CR3 scratch_reg=%rsp
     # Agora sim, aponta o RSP para a pilha do kernel desta CPU. Estamos prontos para trabalhar.
 	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
@@ -543,4 +543,8 @@ asmlinkage long sys_futex_wake(void __user *uaddr, unsigned long mask, int nr, u
 #### `sys_futex_wake`
 
 Este é o nome da função no kernel que implementa a parte "wake" (acordar) da syscall `futex`.
+
+
+
+
 
