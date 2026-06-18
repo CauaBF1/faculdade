@@ -1,0 +1,56 @@
+Uma equipe está desenvolvendo um sistema de matricula e realiza as seguintes atividades: (i) compara o código fonte e os testes com as especificação de requisitos; (ii) pede a estudantes e servidores da universidade que utilizem uma versão candidata do sistema em cenários reais de matrícula; e (iii) propõe executar o sistema com todas as combinações possíveis de entradas para demonstrar que ele não possui defeitos.
+
+a) Classifique as atividades (i) e (ii) como verificação ou validação e justifique
+b) Explique por que a estratégia descrita na atividade III normalmente é inviável, mesmo para programas aparemente simples.
+c) Explique como critérios de cobertura podem apoiar a seleção de um conjunto finito de testes. Em sua resposta, mencione as ideias de subdominios, rastreabilidade e regra de parada.
+d) Por que atingir 100% de um critério de cobertura não demonstra que o software está livre de defeitos?
+
+Resposta:
+
+a) A atividade (i) é verificação, porque verifica se o produto foi construído de acordo com a especificação, comparando código e testes com os requisitos. A atividade (ii) é validação, porque verifica se o sistema atende às necessidades reais dos usuários, colocando estudantes e servidores para usar uma versão candidata em situações reais de matrícula.
+
+b) A estratégia da atividade (iii) é normalmente inviável porque o número de combinações possíveis de entradas pode ser enorme ou até infinito. Mesmo programas simples podem ter muitos campos, valores, estados internos e sequências de uso. Testar tudo exigiria tempo e recursos impraticáveis.
+
+c) Critérios de cobertura ajudam a escolher um conjunto finito de testes ao dividir o domínio de entrada ou o comportamento do programa em subdomínios relevantes. Em vez de testar todas as entradas, escolhem-se casos que representem esses subdomínios. A rastreabilidade permite relacionar os testes aos requisitos, partes do código ou elementos do critério de cobertura, mostrando o que já foi exercitado. A regra de parada define quando os testes podem ser encerrados, por exemplo, quando determinado nível de cobertura foi atingido ou quando todos os requisitos importantes possuem testes associados.
+
+d) Atingir 100% de um critério de cobertura não prova ausência de defeitos porque o critério mede apenas aquilo que ele foi definido para medir. Por exemplo, 100% de cobertura de comandos não garante que todas as combinações de entradas, caminhos, requisitos ou situações reais foram testadas. Além disso, os testes podem estar incompletos, conter oráculos incorretos ou não verificar o resultado esperado adequadamente.
+
+Avaliação geral das respostas em respostas.md:
+
+Validação geral: as respostas estão, em sua maioria, corretas. A Questão 2 está correta conceitualmente. A Questão 4 também está coerente com os arquivos do projeto: os testes de tarifa passam e o comando de cobertura confirma 100% de comandos e 100% de desvios em tarifa.py. A Questão 3 foi validada pelo arquivo test_notas.py, e os testes passam. Como os enunciados completos das Questões 1, 3 e 4 não estão em respostas.md, alguns pontos só podem ser avaliados pelo código disponível e pelo texto da resposta.
+
+Questão 1:
+A resposta está conceitualmente correta, considerando o código em rand/preco.py: a função aplica 50% de desconto para cliente VIP, mas o texto afirma que o requisito era 5%. O exemplo calcular_preco_final(200, True) também está correto: retorna 100, mas deveria retornar 190. A explicação de reachability, infecção, propagação e revelação com preco=0 também faz sentido, pois o defeito é executado, mas a falha fica oculta na saída.
+
+Ajustes gramaticais recomendados na Questão 1:
+- Trocar "porém o requisito é caso o cliente seja VIP dar desconto" por "porém o requisito é dar desconto de 5% caso o cliente seja VIP".
+- Corrigir "disconto" para "desconto".
+- Trocar "clientes vips" por "clientes VIP" ou "clientes VIPs".
+- Escrever `calcular_preco_final(200, True)` com espaço após a vírgula.
+- Evitar "fica com desconto = 100" e preferir "o estado interno fica com desconto igual a 100".
+
+Questão 2:
+A resposta está correta. O item (a) classifica corretamente verificação e validação. O item (b) explica corretamente por que teste exaustivo é inviável. O item (c) menciona adequadamente subdomínios, rastreabilidade e regra de parada. O item (d) explica corretamente que 100% de cobertura não prova ausência de defeitos.
+
+Ajustes gramaticais recomendados na Questão 2:
+- Trocar "pode ser muito grande ou até infinito" por "pode ser muito grande ou até mesmo infinito".
+- Evitar reticências em "muitos campos, valores..."; usar uma frase completa, como "muitos campos, valores, estados internos e sequências de uso".
+
+Questão 3:
+A resposta em respostas.md está muito curta: apenas diz "Implementada em test_notas.py". Pelo arquivo test_notas.py, há testes para média comum, notas nos limites 0 e 10, lista vazia e nota inválida. Os testes passam, então a implementação parece correta. Porém, sem o enunciado da Questão 3, não dá para garantir que todos os itens pedidos foram cobertos apenas com essa frase em respostas.md.
+
+Sugestão para melhorar a Questão 3 em respostas.md:
+Explicar brevemente o que foi implementado: "Foram criados testes para calcular a média de notas válidas, verificar os limites 0 e 10, garantir erro para lista vazia e garantir erro para notas fora do intervalo permitido".
+
+Questão 4:
+A resposta está em geral correta. O arquivo tarifa.pdf existe. O comando de cobertura indicado está correto. A explicação do item (c) está correta: um teste com distancia > 20 e urgente = True cobre comandos, mas não cobre os desvios falsos. O item (d) também está coerente com test_tarifa.py: os testes cobrem os desvios True/True e False/False, e o relatório confirma 100% de branch coverage. O item (e) está conceitualmente correto.
+
+Ajustes gramaticais recomendados na Questão 4:
+- Trocar "nos 2 if's" por "nos dois ifs".
+- Trocar "não cobre os desvios quando os if's retornam falso" por "não cobre os desvios em que as condições dos ifs são falsas".
+- Trocar "Um teste q cobre todos os comando" por "Um teste que cobre todos os comandos".
+- Trocar "como verdadeiros" por "com condições verdadeiras".
+- Evitar aspas em "entra" ou substituir por "executa os blocos dos dois ifs".
+
+Conclusão:
+As respostas estão corretas no conteúdo principal, mas respostas.md precisa de pequenos ajustes de gramática e clareza. A Questão 3 é a única que fica fraca no texto, porque apenas aponta para o arquivo de teste sem explicar o que foi feito. Os testes locais foram executados com venv/bin/python -m pytest -q e passaram: 6 passed. A cobertura da Questão 4 também foi confirmada com 100% em comandos e desvios para tarifa.py.
